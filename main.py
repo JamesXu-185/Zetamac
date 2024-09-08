@@ -4,6 +4,60 @@ from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont, QIntValidator
 import random
 
+class ResultsWindow(QWidget):
+    def __init__(self, score, total_questions, total_time):
+        super().__init__()
+        self.score = score
+        self.total_questions = total_questions
+        self.total_time = total_time
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('Game Results')
+        self.setGeometry(300, 300, 400, 350)
+        
+        layout = QVBoxLayout()
+        
+        title_label = QLabel('Game Results', self)
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setFont(QFont('Arial', 18, QFont.Bold))
+        layout.addWidget(title_label)
+        
+        score_label = QLabel(f'Score: {self.score}/{self.total_questions}', self)
+        score_label.setAlignment(Qt.AlignCenter)
+        score_label.setFont(QFont('Arial', 14))
+        layout.addWidget(score_label)
+        
+        if self.total_questions > 0:
+            percentage = (self.score / self.total_questions) * 100
+            percentage_label = QLabel(f'Percentage: {percentage:.2f}%', self)
+            percentage_label.setAlignment(Qt.AlignCenter)
+            percentage_label.setFont(QFont('Arial', 14))
+            layout.addWidget(percentage_label)
+            
+            avg_time = self.total_time / self.total_questions
+            avg_time_label = QLabel(f'Average time per question: {avg_time:.2f} seconds', self)
+            avg_time_label.setAlignment(Qt.AlignCenter)
+            avg_time_label.setFont(QFont('Arial', 14))
+            layout.addWidget(avg_time_label)
+        else:
+            no_questions_label = QLabel('No questions were answered.', self)
+            no_questions_label.setAlignment(Qt.AlignCenter)
+            no_questions_label.setFont(QFont('Arial', 14))
+            layout.addWidget(no_questions_label)
+        
+        self.play_again_button = QPushButton('Play Again', self)
+        self.play_again_button.setFont(QFont('Arial', 14))
+        self.play_again_button.clicked.connect(self.play_again)
+        layout.addWidget(self.play_again_button)
+        
+        self.setLayout(layout)
+
+    def play_again(self):
+        self.new_game = ZetamacGame()
+        self.new_game.show()
+        self.close()
+
 class ZetamacGame(QWidget):
     def __init__(self):
         super().__init__()
@@ -66,6 +120,7 @@ class ZetamacGame(QWidget):
 
         self.score = 0
         self.questions_asked = 0
+        self.start_time = self.time_left
         self.start_button.setEnabled(False)
         self.time_input.setEnabled(False)
         self.answer_input.setEnabled(True)
@@ -114,8 +169,10 @@ class ZetamacGame(QWidget):
         self.answer_input.setEnabled(False)
         self.start_button.setEnabled(True)
         self.time_input.setEnabled(True)
-        self.question_label.setText(f'Game Over! Score: {self.score}/{self.questions_asked}')
-        QMessageBox.information(self, "Game Over", f"Time's up!\nYou answered {self.score} out of {self.questions_asked} questions correctly.")
+        total_time = self.start_time - self.time_left
+        self.results_window = ResultsWindow(self.score, self.questions_asked, total_time)
+        self.results_window.show()
+        self.close()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
